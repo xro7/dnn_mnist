@@ -1,12 +1,22 @@
 # %load DNN.py
 class DNN():
-    def __init__(self,X_train,y_train,layers):
+    
+    number = 0
+    
+    def __init__(self,X_train,y_train,layers,as_placeholders=True,dtypes=[tf.float32,tf.float32]):
         self.X_train = X_train
         self.y_train = y_train
-        self.X = tf.placeholder(dtype=tf.float32,shape=(None,)+X_train.shape[1:])
-        self.y = tf.placeholder(dtype=tf.float32,shape=(None,)+y_train.shape[1:])
+        if as_placeholders:
+            self.X = tf.placeholder(dtype=dtypes[0],shape=(None,)+X_train.shape[1:])
+            self.y = tf.placeholder(dtype=dtypes[1],shape=(None,)+y_train.shape[1:])
+        else:
+            self.X = X_train
+            self.y = y_train
         self.layers = layers
         self.activations = [self.X]
+        self.layers = layers
+        DNN.number +=1
+        
             
     def forward(self):       
         for i,layer in enumerate(self.layers):
@@ -34,18 +44,21 @@ class DenseLayer():
         DenseLayer.number+=1
         
     def set_input(self,x):
-        with tf.variable_scope(self.variable_scope_name):         
-            self.x = x
-            if(len(x.shape)==4):
-                shape = self.x.get_shape().as_list()        
-                dim = np.prod(shape[1:])
-                self.x = tf.reshape(tensor=self.x,shape=[-1,dim])
+        self.x = x
+        if(len(x.shape)==4):
+            shape = self.x.get_shape().as_list()        
+            dim = np.prod(shape[1:])
+            self.x = tf.reshape(tensor=self.x,shape=[-1,dim])
+
+
+        with tf.variable_scope(self.variable_scope_name):  
             self.init_W((self.x.get_shape().as_list()[1],self.units))
             self.init_b(self.units)
             if(self.batch_norm):
                 self.epsilon = 1e-3
                 self.scale = tf.get_variable('scale', initializer=tf.ones(shape=[self.units]))
                 self.beta =  tf.get_variable('beta', initializer=tf.zeros(shape=[self.units]))
+
         
     def init_W(self,shape):
         #another way to do this with get variable
@@ -245,3 +258,4 @@ class RnnLayer():
                 self.output, self.states = tf.nn.dynamic_rnn(cell,self.x,dtype=tf.float32)
                 self.activation = self.output[:,-1,:]
         return self.activation
+    
