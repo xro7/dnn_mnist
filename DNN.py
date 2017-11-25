@@ -1,9 +1,12 @@
+# %load DNN.py
 class DNN():
-    def __init__(self,X,y,layers):
-		X = tf.placeholder(dtype=tf.float32,shape=(None,)+X_train.shape[1:])
-		y = tf.placeholder(dtype=tf.float32,shape=(None,)+y_train.shape[1:])
-		self.layers = layers
-		self.activations = [self.X]
+    def __init__(self,X_train,y_train,layers):
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X = tf.placeholder(dtype=tf.float32,shape=(None,)+X_train.shape[1:])
+        self.y = tf.placeholder(dtype=tf.float32,shape=(None,)+y_train.shape[1:])
+        self.layers = layers
+        self.activations = [self.X]
             
     def forward(self):       
         for i,layer in enumerate(self.layers):
@@ -13,10 +16,11 @@ class DNN():
     
     def cost(self):
         #return tf.reduce_sum(tf.square(self.activations[-1]-self.y))
-		return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.activations[-1],labels=self.y))
+        return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.activations[-1],labels=self.y))
     
     def squared_cost(self):
-        return tf.reduce_mean(tf.squared_difference(prediction, Y))
+        return tf.reduce_mean(tf.squared_difference(self.activations[-1], self.y))
+    
 class DenseLayer():
     
     number = 0
@@ -241,4 +245,3 @@ class RnnLayer():
                 self.output, self.states = tf.nn.dynamic_rnn(cell,self.x,dtype=tf.float32)
                 self.activation = self.output[:,-1,:]
         return self.activation
-    
