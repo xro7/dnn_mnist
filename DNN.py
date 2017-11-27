@@ -14,9 +14,7 @@ class DNN():
             self.y = y_train
         self.layers = layers
         self.activations = [self.X]
-        self.layers = layers
         DNN.number +=1
-        
             
     def forward(self):       
         for i,layer in enumerate(self.layers):
@@ -31,16 +29,20 @@ class DNN():
     def squared_cost(self):
         return tf.reduce_mean(tf.squared_difference(self.activations[-1], self.y))
     
+    def kl_divergence(self,p, q): 
+        return tf.reduce_sum(p * tf.log(p/q),axis=1)
+    
 class DenseLayer():
     
     number = 0
     
-    def __init__(self,units,activation_function=tf.nn.relu,batch_norm=False,keep_prob=1.0):
+    def __init__(self,units,activation_function=tf.nn.relu,batch_norm=False,keep_prob=1.0,initialize_weights=None):
         self.units = units
         self.keep_prob = keep_prob
         self.activation_function = activation_function
         self.batch_norm = batch_norm
         self.variable_scope_name = 'Dense-'+str(DenseLayer.number)
+        self.initialize_weights = initialize_weights
         DenseLayer.number+=1
         
     def set_input(self,x):
@@ -49,7 +51,6 @@ class DenseLayer():
             shape = self.x.get_shape().as_list()        
             dim = np.prod(shape[1:])
             self.x = tf.reshape(tensor=self.x,shape=[-1,dim])
-
 
         with tf.variable_scope(self.variable_scope_name):  
             self.init_W((self.x.get_shape().as_list()[1],self.units))
@@ -62,8 +63,11 @@ class DenseLayer():
         
     def init_W(self,shape):
         #another way to do this with get variable
-        #self.w= tf.Variable(tf.multiply(tf.random_normal(shape),0.01),dtype=tf.float32)
-        self.w=tf.get_variable('weight',shape=shape,initializer=tf.contrib.layers.xavier_initializer())
+        #self.w= tf.Variable(tf.multiply(tf.random_normal(shape),0.01),dtype=tf.float32)'
+        if self.initialize_weights is None: 
+            self.w=tf.get_variable('weight',shape=shape,initializer=tf.contrib.layers.xavier_initializer())
+        else:
+            self.w=tf.get_variable('weight',shape=shape,initializer=tf.constant_initializer(self.initialize_weights))
         tf.summary.histogram('weight',self.w)
     
     def init_b(self,shape):
